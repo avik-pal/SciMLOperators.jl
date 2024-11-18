@@ -37,30 +37,38 @@ function FunctionOperator(op, op_adjoint, op_inverse, op_adjoint_inverse, traits
         op_adjoint_inverse, traits, p, t, cache)
 end
 
-function set_op(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType,
-            oType}, op) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
-    return FunctionOperator{iip, oop, mul5, T, typeof(op), Fa, Fi, Fai, Tr, P, Tt, C, iType,
+function set_op(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType,
+            oType},
+        op) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
+    return FunctionOperator{
+        iip, oop, mul5, T, typeof(op), Fa, Fi, Fai, Tr, P, Tt, C, iType,
         oType}(op, f.op_adjoint, f.op_inverse, f.op_adjoint_inverse, f.traits, f.p, f.t,
         f.cache)
 end
 
-function set_op_adjoint(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
-            iType, oType}, op_adjoint) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
+function set_op_adjoint(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+            iType, oType},
+        op_adjoint) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
         C, iType, oType}
     return FunctionOperator{iip, oop, mul5, T, F, typeof(op_adjoint), Fi, Fai, Tr, P, Tt,
         C, iType, oType}(f.op, op_adjoint, f.op_inverse, f.op_adjoint_inverse, f.traits,
         f.p, f.t, f.cache)
 end
 
-function set_op_inverse(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
-            iType, oType}, op_inverse) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
+function set_op_inverse(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+            iType, oType},
+        op_inverse) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
         C, iType, oType}
     return FunctionOperator{iip, oop, mul5, T, F, Fa, typeof(op_inverse), Fai, Tr, P, Tt,
         C, iType, oType}(f.op, f.op_adjoint, op_inverse, f.op_adjoint_inverse, f.traits,
         f.p, f.t, f.cache)
 end
 
-function set_op_adjoint_inverse(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr,
+function set_op_adjoint_inverse(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr,
             P, Tt, C, iType, oType},
         op_adjoint_inverse) where {iip, oop, mul5, T, F, Fa,
         Fi, Fai, Tr, P, Tt, C, iType, oType}
@@ -69,31 +77,39 @@ function set_op_adjoint_inverse(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi
         f.traits, f.p, f.t, f.cache)
 end
 
-function set_traits(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
-            iType, oType}, traits) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+function set_traits(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+            iType, oType},
+        traits) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
         iType, oType}
     return FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, typeof(traits), P, Tt,
         C, iType, oType}(f.op, f.op_adjoint, f.op_inverse, f.op_adjoint_inverse, traits,
         f.p, f.t, f.cache)
 end
 
-function set_p(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
-            iType, oType}, p) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType,
+function set_p(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+            iType, oType},
+        p) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType,
         oType}
     return FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, typeof(p), Tt, C, iType,
         oType}(f.op, f.op_adjoint, f.op_inverse, f.op_adjoint_inverse, f.traits, p, f.t,
         f.cache)
 end
 
-function set_t(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType,
-            oType}, t) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
+function set_t(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType,
+            oType},
+        t) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
     return FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, typeof(t), C, iType,
         oType}(f.op, f.op_adjoint, f.op_inverse, f.op_adjoint_inverse, f.traits, f.p, t,
         f.cache)
 end
 
-function set_cache(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
-            iType, oType}, cache) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+function set_cache(
+        f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+            iType, oType},
+        cache) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
         iType, oType}
     return FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, typeof(cache),
         iType, oType}(f.op, f.op_adjoint, f.op_inverse, f.op_adjoint_inverse, f.traits,
@@ -101,14 +117,14 @@ function set_cache(f::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P,
 end
 
 function input_eltype(::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
-        iType, oType,
-    }) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
+        iType, oType
+}) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
     return iType
 end
 
 function output_eltype(::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
-        iType, oType,
-    }) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
+        iType, oType
+}) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
     return oType
 end
 
@@ -167,6 +183,7 @@ uniform across `op`, `op_adjoint`, `op_inverse`, `op_adjoint_inverse`.
 * `issymmetric` - `true` if the operator is linear and symmetric. Defaults to `false`.
 * `ishermitian` - `true` if the operator is linear and hermitian. Defaults to `false`.
 * `isposdef` - `true` if the operator is linear and positive-definite. Defaults to `false`.
+* `kwargs` - Keyword arguments for cache initialization. If `accepted_kwargs` is provided, the corresponding keyword arguments must be passed.
 """
 function FunctionOperator(op,
         input::AbstractArray,
@@ -174,7 +191,7 @@ function FunctionOperator(op,
         op_inverse = nothing,
         op_adjoint_inverse = nothing, p = nothing,
         t::Union{Number, Nothing} = nothing,
-        accepted_kwargs::NTuple{N, Symbol} = (),
+        accepted_kwargs::Union{Nothing, Val, NTuple{N, Symbol}} = nothing,
 
         # traits
         T::Union{Type{<:Number}, Nothing} = nothing,
@@ -191,7 +208,8 @@ function FunctionOperator(op,
         opnorm = nothing,
         issymmetric::Union{Bool, Val} = Val(false),
         ishermitian::Union{Bool, Val} = Val(false),
-        isposdef::Bool = false,) where {N}
+        isposdef::Bool = false,
+        kwargs...) where {N}
 
     # establish types
 
@@ -249,7 +267,7 @@ function FunctionOperator(op,
     # evaluation signatures
 
     _isinplace = if isinplace === nothing
-        Val(static_hasmethod(op, typeof((output, input, p, _t))))
+        Val(hasmethod(op, typeof((output, input, p, _t))))
     elseif isinplace isa Bool
         Val(isinplace)
     else
@@ -257,7 +275,7 @@ function FunctionOperator(op,
     end
 
     _outofplace = if outofplace === nothing
-        Val(static_hasmethod(op, typeof((input, p, _t))))
+        Val(hasmethod(op, typeof((input, p, _t))))
     elseif outofplace isa Bool
         Val(outofplace)
     else
@@ -265,7 +283,7 @@ function FunctionOperator(op,
     end
 
     if !_unwrap_val(_isinplace) & !_unwrap_val(_outofplace)
-        @error """Please provide a funciton with signatures `op(u, p, t)` for
+        @error """Please provide a function with signatures `op(u, p, t)` for
         applying the operator out-of-place, and/or the signature is
         `op(v, u, p, t)` for in-place application."""
     end
@@ -300,12 +318,21 @@ function FunctionOperator(op,
         _op_adjoint_inverse = op_adjoint_inverse
     end
 
+    if accepted_kwargs === nothing
+        accepted_kwargs = Val(())
+        kwargs = NamedTuple()
+    else
+        length(kwargs) != 0 ||
+            throw(ArgumentError("No keyword arguments provided. When `accepted_kwargs` is provided, the corresponding keyword arguments must be passed for cache initialization."))
+        kwargs = get_filtered_kwargs(kwargs, accepted_kwargs)
+    end
+
     traits = (; islinear, isconvertible, isconstant, opnorm,
         issymmetric = _unwrap_val(issymmetric), ishermitian = _unwrap_val(ishermitian),
         isposdef, isinplace = _unwrap_val(_isinplace),
         outofplace = _unwrap_val(_outofplace), has_mul5 = _unwrap_val(_has_mul5),
         ifcache = _unwrap_val(ifcache), T = _T, batch, size = _size, sizes,
-        accepted_kwargs, kwargs = Dict{Symbol, Any}())
+        accepted_kwargs, kwargs = kwargs)
 
     L = FunctionOperator{_unwrap_val(_isinplace), _unwrap_val(_outofplace),
         _unwrap_val(_has_mul5), _T, typeof(op), typeof(_op_adjoint), typeof(op_inverse),
@@ -326,7 +353,7 @@ end
 
 @inline __has_mul5(::Nothing, y, x, p, t) = Val(true)
 @inline function __has_mul5(f::F, y, x, p, t) where {F}
-    return Val(static_hasmethod(f, typeof((y, x, p, t, t, t))))
+    return Val(hasmethod(f, typeof((y, x, p, t, t, t))))
 end
 @inline __and_val(vs...) = mapreduce(_unwrap_val, *, vs)
 
@@ -339,7 +366,7 @@ function update_coefficients(L::FunctionOperator, u, p, t; kwargs...)
     # filter and update kwargs
     filtered_kwargs = get_filtered_kwargs(kwargs, L.traits.accepted_kwargs)
 
-    L = set_traits(L, merge(L.traits, (; kwargs = Dict{Symbol, Any}(filtered_kwargs))))
+    L = set_traits(L, merge(L.traits, (; kwargs = filtered_kwargs)))
 
     isconstant(L) && return L
 
@@ -358,7 +385,7 @@ function update_coefficients!(L::FunctionOperator, u, p, t; kwargs...)
 
     # filter and update kwargs
     filtered_kwargs = get_filtered_kwargs(kwargs, L.traits.accepted_kwargs)
-    L.traits = (; L.traits..., kwargs = Dict{Symbol, Any}(filtered_kwargs))
+    L.traits = merge(L.traits, (; kwargs = filtered_kwargs))
 
     isconstant(L) && return
 
@@ -366,7 +393,7 @@ function update_coefficients!(L::FunctionOperator, u, p, t; kwargs...)
         update_coefficients!(op, u, p, t; filtered_kwargs...)
     end
 
-    L
+    nothing
 end
 
 function iscached(L::FunctionOperator)
@@ -421,7 +448,8 @@ end
 cache_self(L::FunctionOperator, u::AbstractArray) = _cache_self(L, u)
 cache_self(L::FunctionOperator, u::AbstractVecOrMat) = _cache_self(L, u)
 
-function _cache_self(L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
+function _cache_self(
+        L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C,
             iType, oType},
         u::AbstractArray) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P,
         Tt, C, iType, oType}
@@ -435,7 +463,8 @@ end
 cache_internals(L::FunctionOperator, u::AbstractArray) = _cache_internals(L, u)
 cache_internals(L::FunctionOperator, u::AbstractVecOrMat) = _cache_internals(L, u)
 
-function _cache_internals(L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
+function _cache_internals(
+        L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
             C, iType, oType},
         u::AbstractArray) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr,
         P, Tt, C, iType, oType}
@@ -445,7 +474,8 @@ function _cache_internals(L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai,
     newop_adjoint_inverse = cache_operator(L.op_adjoint_inverse, u)
 
     return FunctionOperator{iip, oop, mul5, T, typeof(newop), typeof(newop_adjoint),
-        typeof(newop_inverse), typeof(newop_adjoint_inverse), Tr, P, Tt, C, iType, oType}(newop, newop_adjoint, newop_inverse, newop_adjoint_inverse, L.traits, L.p, L.t,
+        typeof(newop_inverse), typeof(newop_adjoint_inverse), Tr, P, Tt, C, iType, oType}(
+        newop, newop_adjoint, newop_inverse, newop_adjoint_inverse, L.traits, L.p, L.t,
         L.cache)
 end
 
@@ -456,8 +486,9 @@ end
 Base.size(L::FunctionOperator) = L.traits.size
 
 function Base.adjoint(L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
-        C, iType, oType,
-    }) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
+        C, iType,
+        oType
+}) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
     (ishermitian(L) | (isreal(L) & issymmetric(L))) && return L
 
     has_adjoint(L) || return AdjointOperator(L)
@@ -474,13 +505,15 @@ function Base.adjoint(L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr,
 
     return FunctionOperator{iip, oop, mul5, T, typeof(op), typeof(op_adjoint),
         typeof(op_inverse), typeof(op_adjoint_inverse), typeof(traits), P, Tt,
-        typeof(cache), oType, iType}(op, op_adjoint, op_inverse, op_adjoint_inverse, traits,
+        typeof(cache), oType, iType}(
+        op, op_adjoint, op_inverse, op_adjoint_inverse, traits,
         L.p, L.t, cache)
 end
 
 function Base.inv(L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt,
-        C, iType, oType,
-    }) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
+        C, iType,
+        oType
+}) where {iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, Tt, C, iType, oType}
     has_ldiv(L) || return InvertedOperator(L)
 
     op = L.op_inverse
@@ -503,7 +536,8 @@ function Base.inv(L::FunctionOperator{iip, oop, mul5, T, F, Fa, Fi, Fai, Tr, P, 
 
     return FunctionOperator{iip, oop, mul5, T, typeof(op), typeof(op_adjoint),
         typeof(op_inverse), typeof(op_adjoint_inverse), typeof(traits), P, Tt,
-        typeof(cache), oType, iType}(op, op_adjoint, op_inverse, op_adjoint_inverse, traits,
+        typeof(cache), oType, iType}(
+        op, op_adjoint, op_inverse, op_adjoint_inverse, traits,
         L.p, L.t, cache)
 end
 
@@ -519,7 +553,7 @@ function Base.resize!(L::FunctionOperator, n::Integer)
     end
 
     for op in getops(L)
-        if static_hasmethod(resize!, typeof((op, n)))
+        if hasmethod(resize!, typeof((op, n)))
             resize!(op, n)
         end
     end
@@ -528,7 +562,7 @@ function Base.resize!(L::FunctionOperator, n::Integer)
         resize!(v, n)
     end
 
-    L.traits = (; L.traits..., size = (n, n), sizes = ((n,), (n,)),)
+    L.traits = (; L.traits..., size = (n, n), sizes = ((n,), (n,)))
 
     L
 end
@@ -550,7 +584,7 @@ function getops(L::FunctionOperator)
         op = L.op,
         op_adjoint = L.op_adjoint,
         op_inverse = L.op_inverse,
-        op_adjoint_inverse = L.op_adjoint_inverse,)
+        op_adjoint_inverse = L.op_adjoint_inverse)
 end
 
 islinear(L::FunctionOperator) = L.traits.islinear
@@ -569,13 +603,13 @@ function _sizecheck(L::FunctionOperator, u, v)
             if !isa(u, AbstractVecOrMat)
                 msg = """$L constructed with `batch = true` only
                     accept input arrays that are `AbstractVecOrMat`s with
-                    `size(L, 2) == size(u, 1)`. Recieved $(typeof(u))."""
+                    `size(L, 2) == size(u, 1)`. Received $(typeof(u))."""
                 throw(ArgumentError(msg))
             end
 
             if size(L, 2) != size(u, 1)
                 msg = """$L accepts input `AbstractVecOrMat`s of size
-                    ($(size(L, 2)), K). Recievd array of size $(size(u))."""
+                    ($(size(L, 2)), K). Received array of size $(size(u))."""
                 throw(DimensionMismatch(msg))
             end
         end # u
@@ -584,13 +618,13 @@ function _sizecheck(L::FunctionOperator, u, v)
             if !isa(v, AbstractVecOrMat)
                 msg = """$L constructed with `batch = true` only
                     returns output arrays that are `AbstractVecOrMat`s with
-                    `size(L, 1) == size(v, 1)`. Recieved $(typeof(v))."""
+                    `size(L, 1) == size(v, 1)`. Received $(typeof(v))."""
                 throw(ArgumentError(msg))
             end
 
             if size(L, 1) != size(v, 1)
                 msg = """$L accepts output `AbstractVecOrMat`s of size
-                    ($(size(L, 1)), K). Recievd array of size $(size(v))."""
+                    ($(size(L, 1)), K). Received array of size $(size(v))."""
                 throw(DimensionMismatch(msg))
             end
         end # v
@@ -611,7 +645,7 @@ function _sizecheck(L::FunctionOperator, u, v)
     else # !batch
         if !isnothing(u)
             if size(u) ∉ (sizes[1], tuple(size(L, 2)))
-                msg = """$L recievd input array of size $(size(u)), but only
+                msg = """$L received input array of size $(size(u)), but only
                     accepts input arrays of size $(sizes[1]), or vectors like
                     `vec(u)` of size $(tuple(prod(sizes[1])))."""
                 throw(DimensionMismatch(msg))
@@ -620,7 +654,7 @@ function _sizecheck(L::FunctionOperator, u, v)
 
         if !isnothing(v)
             if size(v) ∉ (sizes[2], tuple(size(L, 1)))
-                msg = """$L recievd output array of size $(size(v)), but only
+                msg = """$L received output array of size $(size(v)), but only
                     accepts output arrays of size $(sizes[2]), or vectors like
                     `vec(u)` of size $(tuple(prod(sizes[2])))"""
                 throw(DimensionMismatch(msg))

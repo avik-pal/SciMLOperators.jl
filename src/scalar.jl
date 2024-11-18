@@ -151,7 +151,7 @@ val_update = (a, u, p, t; scale = 0.0) -> copy(scale)
 """
 function ScalarOperator(val;
         update_func = DEFAULT_UPDATE_FUNC,
-        accepted_kwargs = nothing,)
+        accepted_kwargs = nothing)
     update_func = preprocess_update_func(update_func, accepted_kwargs)
     ScalarOperator(val, update_func)
 end
@@ -191,10 +191,11 @@ has_ldiv!(α::ScalarOperator) = has_ldiv(α)
 
 function update_coefficients!(L::ScalarOperator, u, p, t; kwargs...)
     L.val = L.update_func(L.val, u, p, t; kwargs...)
+    nothing
 end
 
-function update_coefficients(L::ScalarOperator, u, p, t; kwargs...)
-    @set! L.val = L.update_func(L.val, u, p, t; kwargs...)
+function SciMLOperators.update_coefficients(L::ScalarOperator, u, p, t; kwargs...)
+    return ScalarOperator(L.update_func(L.val, u, p, t; kwargs...), L.update_func)
 end
 
 """
@@ -235,7 +236,8 @@ for op in (:-, :+)
     for T in SCALINGNUMBERTYPES[2:end]
         @eval Base.$op(α::AbstractSciMLScalarOperator, x::$T) = AddedScalarOperator(α,
             ScalarOperator($op(x)))
-        @eval Base.$op(x::$T, α::AbstractSciMLScalarOperator) = AddedScalarOperator(ScalarOperator(x),
+        @eval Base.$op(x::$T, α::AbstractSciMLScalarOperator) = AddedScalarOperator(
+            ScalarOperator(x),
             $op(α))
     end
 end
@@ -261,7 +263,7 @@ function update_coefficients(L::AddedScalarOperator, u, p, t)
         ops = (ops..., update_coefficients(op, u, p, t))
     end
 
-    @set! L.ops = ops
+    @reset L.ops = ops
 end
 
 getops(α::AddedScalarOperator) = α.ops
@@ -290,20 +292,45 @@ end
 
 for op in (:*, :∘)
     @eval Base.$op(ops::AbstractSciMLScalarOperator...) = reduce($op, ops)
-    @eval Base.$op(A::AbstractSciMLScalarOperator, B::AbstractSciMLScalarOperator) = ComposedScalarOperator(A,
+    @eval Base.$op(A::AbstractSciMLScalarOperator, B::AbstractSciMLScalarOperator) = ComposedScalarOperator(
+        A,
         B)
-    @eval Base.$op(A::ComposedScalarOperator, B::AbstractSciMLScalarOperator) = ComposedScalarOperator(A.ops...,
+    @eval Base.$op(A::ComposedScalarOperator, B::AbstractSciMLScalarOperator) = ComposedScalarOperator(
+        A.ops...,
         B)
-    @eval Base.$op(A::AbstractSciMLScalarOperator, B::ComposedScalarOperator) = ComposedScalarOperator(A,
+    @eval Base.$op(A::AbstractSciMLScalarOperator, B::ComposedScalarOperator) = ComposedScalarOperator(
+        A,
         B.ops...)
-    @eval Base.$op(A::ComposedScalarOperator, B::ComposedScalarOperator) = ComposedScalarOperator(A.ops...,
+    @eval Base.$op(A::ComposedScalarOperator, B::ComposedScalarOperator) = ComposedScalarOperator(
+        A.ops...,
         B.ops...)
 
     for T in SCALINGNUMBERTYPES[2:end]
         @eval Base.$op(α::AbstractSciMLScalarOperator, x::$T) = ComposedScalarOperator(α,
             ScalarOperator(x))
-        @eval Base.$op(x::$T, α::AbstractSciMLScalarOperator) = ComposedScalarOperator(ScalarOperator(x),
+        @eval Base.$op(x::$T, α::AbstractSciMLScalarOperator) = ComposedScalarOperator(
+            ScalarOperator(x),
             α)
+    end
+end
+
+# Different methods for constant ScalarOperators
+for T in SCALINGNUMBERTYPES[2:end]
+    @eval function Base.:*(α::ScalarOperator, x::$T)
+        if isconstant(α)
+            T2 = promote_type($T, eltype(α))
+            return ScalarOperator(convert(T2, α) * x, α.update_func)
+        else
+            return ComposedScalarOperator(α, ScalarOperator(x))
+        end
+    end
+    @eval function Base.:*(x::$T, α::ScalarOperator)
+        if isconstant(α)
+            T2 = promote_type($T, eltype(α))
+            return ScalarOperator(convert(T2, α) * x, α.update_func)
+        else
+            return ComposedScalarOperator(ScalarOperator(x), α)
+        end
     end
 end
 
@@ -330,7 +357,7 @@ function update_coefficients(L::ComposedScalarOperator, u, p, t)
         ops = (ops..., update_coefficients(op, u, p, t))
     end
 
-    @set! L.ops = ops
+    @reset L.ops = ops
 end
 
 getops(α::ComposedScalarOperator) = α.ops
@@ -387,7 +414,7 @@ end
 Base.conj(L::InvertedScalarOperator) = InvertedScalarOperator(conj(L.λ))
 
 function update_coefficients(L::InvertedScalarOperator, u, p, t)
-    @set! L.λ = update_coefficients(L.λ, u, p, t)
+    @reset L.λ = update_coefficients(L.λ, u, p, t)
     L
 end
 

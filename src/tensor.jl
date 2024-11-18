@@ -24,16 +24,17 @@ struct TensorProductOperator{T, O, C} <: AbstractSciMLOperator{T}
     ops::O
     cache::C
 
-    function TensorProductOperator(ops::NTuple{
+    function TensorProductOperator(
+            ops::NTuple{
                 2,
-                Union{AbstractMatrix, AbstractSciMLOperator},
+                Union{AbstractMatrix, AbstractSciMLOperator}
             },
             cache::Union{Tuple, Nothing})
         T = promote_type(eltype.(ops)...)
 
         new{T,
             typeof(ops),
-            typeof(cache),
+            typeof(cache)
         }(ops, cache)
     end
 end
@@ -81,10 +82,6 @@ function Base.convert(::Type{AbstractMatrix}, L::TensorProductOperator)
     kron(convert.(AbstractMatrix, L.ops)...)
 end
 
-function SparseArrays.sparse(L::TensorProductOperator)
-    kron(sparse.(AbstractMatrix, L.ops)...)
-end
-
 #LinearAlgebra.opnorm(L::TensorProductOperator) = prod(opnorm, L.ops)
 
 function Base.show(io::IO, L::TensorProductOperator)
@@ -113,7 +110,7 @@ function update_coefficients(L::TensorProductOperator, u, p, t)
         ops = (ops..., update_coefficients(op, u, p, t))
     end
 
-    @set! L.ops = ops
+    @reset L.ops = ops
 end
 
 getops(L::TensorProductOperator) = L.ops
@@ -185,7 +182,7 @@ function cache_self(L::TensorProductOperator, u::AbstractVecOrMat)
         c7 = lmul!(false, similar(u, (no, ni * k))) # c7 = outer \ c6
     end
 
-    @set! L.cache = (c1, c2, c3, c4, c5, c6, c7)
+    @reset L.cache = (c1, c2, c3, c4, c5, c6, c7)
     L
 end
 
@@ -203,8 +200,8 @@ function cache_internals(L::TensorProductOperator, u::AbstractVecOrMat)
     uinner = reshape(u, (ni, no * k))
     uouter = reshape(L.cache[2], (no, mi * k))
 
-    @set! L.ops[2] = cache_operator(inner, uinner)
-    @set! L.ops[1] = cache_operator(outer, uouter)
+    @reset L.ops[2] = cache_operator(inner, uinner)
+    @reset L.ops[1] = cache_operator(outer, uouter)
     L
 end
 

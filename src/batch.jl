@@ -18,7 +18,7 @@ struct BatchedDiagonalOperator{T, D, F, F!} <: AbstractSciMLOperator{T}
             eltype(diag),
             typeof(diag),
             typeof(update_func),
-            typeof(update_func!),
+            typeof(update_func!)
         }(diag,
             update_func,
             update_func!)
@@ -63,7 +63,7 @@ function Base.conj(L::BatchedDiagonalOperator) # TODO - test this thoroughly
     DiagonalOperator(conj(L.diag);
         update_func = update_func,
         update_func! = update_func!,
-        accepted_kwargs = NoKwargFilter(),)
+        accepted_kwargs = NoKwargFilter())
 end
 
 function Base.convert(::Type{AbstractMatrix}, L::BatchedDiagonalOperator)
@@ -83,11 +83,13 @@ end
 LinearAlgebra.isposdef(L::BatchedDiagonalOperator) = isposdef(Diagonal(vec(L.diag)))
 
 function update_coefficients(L::BatchedDiagonalOperator, u, p, t; kwargs...)
-    @set! L.diag = L.update_func(L.diag, u, p, t; kwargs...)
+    @reset L.diag = L.update_func(L.diag, u, p, t; kwargs...)
 end
 
 function update_coefficients!(L::BatchedDiagonalOperator, u, p, t; kwargs...)
     L.update_func!(L.diag, u, p, t; kwargs...)
+
+    nothing
 end
 
 getops(L::BatchedDiagonalOperator) = (L.diag,)

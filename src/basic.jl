@@ -36,7 +36,7 @@ has_mul!(::IdentityOperator) = true
 has_ldiv(::IdentityOperator) = true
 has_ldiv!(::IdentityOperator) = true
 
-# opeator application
+# operator application
 for op in (:*, :\)
     @eval function Base.$op(ii::IdentityOperator, u::AbstractVecOrMat)
         @assert size(u, 1) == ii.len
@@ -44,12 +44,13 @@ for op in (:*, :\)
     end
 end
 
-function LinearAlgebra.mul!(v::AbstractVecOrMat, ii::IdentityOperator, u::AbstractVecOrMat)
+@inline function LinearAlgebra.mul!(
+        v::AbstractVecOrMat, ii::IdentityOperator, u::AbstractVecOrMat)
     @assert size(u, 1) == ii.len
     copy!(v, u)
 end
 
-function LinearAlgebra.mul!(v::AbstractVecOrMat,
+@inline function LinearAlgebra.mul!(v::AbstractVecOrMat,
         ii::IdentityOperator,
         u::AbstractVecOrMat,
         α,
@@ -128,7 +129,7 @@ Base.iszero(::NullOperator) = true
 has_adjoint(::NullOperator) = true
 has_mul!(::NullOperator) = true
 
-# opeator application
+# operator application
 Base.:*(nn::NullOperator, u::AbstractVecOrMat) = (@assert size(u, 1) == nn.len; zero(u))
 
 function LinearAlgebra.mul!(v::AbstractVecOrMat, nn::NullOperator, u::AbstractVecOrMat)
@@ -180,7 +181,7 @@ $TYPEDEF
 """
 struct ScaledOperator{T,
     λType,
-    LType,
+    LType
 } <: AbstractSciMLOperator{T}
     λ::λType
     L::LType
@@ -194,13 +195,14 @@ end
 
 # constructors
 for T in SCALINGNUMBERTYPES[2:end]
-    @eval ScaledOperator(λ::$T, L::AbstractSciMLOperator) = ScaledOperator(ScalarOperator(λ),
+    @eval ScaledOperator(λ::$T, L::AbstractSciMLOperator) = ScaledOperator(
+        ScalarOperator(λ),
         L)
 end
 
 for T in SCALINGNUMBERTYPES
     @eval function ScaledOperator(λ::$T, L::ScaledOperator)
-        λ = ScalarOperator(λ) * L.λ
+        λ = λ * L.λ
         ScaledOperator(λ, L.L)
     end
 
@@ -222,7 +224,6 @@ Base.:+(L::AbstractSciMLOperator) = L
 function Base.convert(::Type{AbstractMatrix}, L::ScaledOperator)
     convert(Number, L.λ) * convert(AbstractMatrix, L.L)
 end
-SparseArrays.sparse(L::ScaledOperator) = L.λ * sparse(L.L)
 
 # traits
 function Base.show(io::IO, L::ScaledOperator{T}) where {T}
@@ -240,11 +241,19 @@ Base.resize!(L::ScaledOperator, n::Integer) = (resize!(L.L, n); L)
 LinearAlgebra.opnorm(L::ScaledOperator, p::Real = 2) = abs(L.λ) * opnorm(L.L, p)
 
 function update_coefficients(L::ScaledOperator, u, p, t)
-    @set! L.L = update_coefficients(L.L, u, p, t)
-    @set! L.λ = update_coefficients(L.λ, u, p, t)
+    @reset L.L = update_coefficients(L.L, u, p, t)
+    @reset L.λ = update_coefficients(L.λ, u, p, t)
 
     L
 end
+
+function update_coefficients!(L::ScaledOperator, u, p, t)
+    update_coefficients!(L.L, u, p, t)
+    update_coefficients!(L.λ, u, p, t)
+
+    nothing
+end
+
 getops(L::ScaledOperator) = (L.λ, L.L)
 isconstant(L::ScaledOperator) = isconstant(L.L) & isconstant(L.λ)
 islinear(L::ScaledOperator) = islinear(L.L)
@@ -256,8 +265,8 @@ has_ldiv(L::ScaledOperator) = has_ldiv(L.L) & !iszero(L.λ)
 has_ldiv!(L::ScaledOperator) = has_ldiv!(L.L) & !iszero(L.λ)
 
 function cache_internals(L::ScaledOperator, u::AbstractVecOrMat)
-    @set! L.L = cache_operator(L.L, u)
-    @set! L.λ = cache_operator(L.λ, u)
+    @reset L.L = cache_operator(L.L, u)
+    @reset L.λ = cache_operator(L.λ, u)
     L
 end
 
@@ -280,13 +289,14 @@ end
 Base.:*(L::ScaledOperator, u::AbstractVecOrMat) = L.λ * (L.L * u)
 Base.:\(L::ScaledOperator, u::AbstractVecOrMat) = L.λ \ (L.L \ u)
 
-function LinearAlgebra.mul!(v::AbstractVecOrMat, L::ScaledOperator, u::AbstractVecOrMat)
+@inline function LinearAlgebra.mul!(
+        v::AbstractVecOrMat, L::ScaledOperator, u::AbstractVecOrMat)
     iszero(L.λ) && return lmul!(false, v)
     a = convert(Number, L.λ)
     mul!(v, L.L, u, a, false)
 end
 
-function LinearAlgebra.mul!(v::AbstractVecOrMat,
+@inline function LinearAlgebra.mul!(v::AbstractVecOrMat,
         L::ScaledOperator,
         u::AbstractVecOrMat,
         α,
@@ -312,27 +322,39 @@ Lazy operator addition
     (A1 + A2 + A3...)u = A1*u + A2*u + A3*u ....
 """
 struct AddedOperator{T,
-    O <: Tuple{Vararg{AbstractSciMLOperator}},
+    O <: Tuple{Vararg{AbstractSciMLOperator}}
 } <: AbstractSciMLOperator{T}
     ops::O
 
     function AddedOperator(ops)
         @assert !isempty(ops)
+        _check_AddedOperator_sizes(ops)
         T = promote_type(eltype.(ops)...)
         new{T, typeof(ops)}(ops)
     end
 end
 
 function AddedOperator(ops::AbstractSciMLOperator...)
-    sz = size(first(ops))
-    for op in ops[2:end]
-        @assert size(op)==sz "Dimension mismatch: cannot add operators of
-      sizes $(sz), and $(size(op))."
-    end
     AddedOperator(ops)
 end
 
 AddedOperator(L::AbstractSciMLOperator) = L
+
+@generated function _check_AddedOperator_sizes(ops::Tuple)
+    ops_types = ops.parameters
+    N = length(ops_types)
+    sz_expr_list = ()
+    sz_expr = :(sz = size(first(ops)))
+    for i in 2:N
+        sz_expr_list = (sz_expr_list..., :(size(ops[$i]) == sz))
+    end
+
+    quote
+        $sz_expr
+        @assert all(tuple($(sz_expr_list...))) "Dimension mismatch: cannot add operators of different sizes."
+        nothing
+    end
+end
 
 # constructors
 Base.:+(A::AbstractSciMLOperator, B::AbstractMatrix) = A + MatrixOperator(B)
@@ -363,6 +385,7 @@ for op in (:+, :-)
         for LT in SCALINGCOMBINETYPES
             @eval function Base.$op(L::$LT, λ::$T)
                 @assert issquare(L)
+                iszero(λ) && return L
                 N = size(L, 1)
                 Id = IdentityOperator(N)
                 AddedOperator(L, $op(λ) * Id)
@@ -370,6 +393,7 @@ for op in (:+, :-)
 
             @eval function Base.$op(λ::$T, L::$LT)
                 @assert issquare(L)
+                iszero(λ) && return $op(L)
                 N = size(L, 1)
                 Id = IdentityOperator(N)
                 AddedOperator(λ * Id, $op(L))
@@ -378,10 +402,26 @@ for op in (:+, :-)
     end
 end
 
+for T in SCALINGNUMBERTYPES[2:end]
+    @eval function Base.:*(λ::$T, L::AddedOperator)
+        ops = map(op -> λ * op, L.ops)
+        AddedOperator(ops)
+    end
+
+    @eval function Base.:*(L::AddedOperator, λ::$T)
+        ops = map(op -> λ * op, L.ops)
+        AddedOperator(ops)
+    end
+
+    @eval function Base.:/(L::AddedOperator, λ::$T)
+        ops = map(op -> op / λ, L.ops)
+        AddedOperator(ops)
+    end
+end
+
 function Base.convert(::Type{AbstractMatrix}, L::AddedOperator)
     sum(op -> convert(AbstractMatrix, op), L.ops)
 end
-SparseArrays.sparse(L::AddedOperator) = sum(sparse, L.ops)
 
 # traits
 function Base.show(io::IO, L::AddedOperator)
@@ -412,7 +452,19 @@ function update_coefficients(L::AddedOperator, u, p, t)
         ops = (ops..., update_coefficients(op, u, p, t))
     end
 
-    @set! L.ops = ops
+    @reset L.ops = ops
+end
+
+@generated function update_coefficients!(L::AddedOperator, u, p, t)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        Base.@nexprs $N i->begin
+            update_coefficients!(L.ops[i], u, p, t)
+        end
+
+        nothing
+    end
 end
 
 getops(L::AddedOperator) = L.ops
@@ -420,11 +472,15 @@ islinear(L::AddedOperator) = all(islinear, getops(L))
 Base.iszero(L::AddedOperator) = all(iszero, getops(L))
 has_adjoint(L::AddedOperator) = all(has_adjoint, L.ops)
 
-function cache_internals(L::AddedOperator, u::AbstractVecOrMat)
-    for i in 1:length(L.ops)
-        @set! L.ops[i] = cache_operator(L.ops[i], u)
+@generated function cache_internals(L::AddedOperator, u::AbstractVecOrMat)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        Base.@nexprs $N i->begin
+            @reset L.ops[i] = cache_operator(L.ops[i], u)
+        end
+        L
     end
-    L
 end
 
 getindex(L::AddedOperator, i::Int) = sum(op -> op[i], L.ops)
@@ -434,26 +490,33 @@ function Base.:*(L::AddedOperator, u::AbstractVecOrMat)
     sum(op -> iszero(op) ? zero(u) : op * u, L.ops)
 end
 
-function LinearAlgebra.mul!(v::AbstractVecOrMat, L::AddedOperator, u::AbstractVecOrMat)
-    mul!(v, first(L.ops), u)
-    for op in L.ops[2:end]
-        iszero(op) && continue
-        mul!(v, op, u, true, true)
+@generated function LinearAlgebra.mul!(
+        v::AbstractVecOrMat, L::AddedOperator, u::AbstractVecOrMat)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        mul!(v, L.ops[1], u)
+        Base.@nexprs $(N - 1) i->begin
+            mul!(v, L.ops[i + 1], u, true, true)
+        end
+        v
     end
-    v
 end
 
-function LinearAlgebra.mul!(v::AbstractVecOrMat,
+@generated function LinearAlgebra.mul!(v::AbstractVecOrMat,
         L::AddedOperator,
         u::AbstractVecOrMat,
         α,
         β)
-    lmul!(β, v)
-    for op in L.ops
-        iszero(op) && continue
-        mul!(v, op, u, α, true)
+    ops_types = L.parameters[2].parameters
+    N = length(ops_types)
+    quote
+        lmul!(β, v)
+        Base.@nexprs $(N) i->begin
+            mul!(v, L.ops[i], u, α, true)
+        end
+        v
     end
-    v
 end
 
 """
@@ -491,9 +554,11 @@ end
 # constructors
 for op in (:*, :∘)
     @eval Base.$op(ops::AbstractSciMLOperator...) = reduce($op, ops)
-    @eval Base.$op(A::AbstractSciMLOperator, B::AbstractSciMLOperator) = ComposedOperator(A,
+    @eval Base.$op(A::AbstractSciMLOperator, B::AbstractSciMLOperator) = ComposedOperator(
+        A,
         B)
-    @eval Base.$op(A::ComposedOperator, B::AbstractSciMLOperator) = ComposedOperator(A.ops...,
+    @eval Base.$op(A::ComposedOperator, B::AbstractSciMLOperator) = ComposedOperator(
+        A.ops...,
         B)
     @eval Base.$op(A::AbstractSciMLOperator, B::ComposedOperator) = ComposedOperator(A,
         B.ops...)
@@ -537,7 +602,6 @@ end
 function Base.convert(::Type{AbstractMatrix}, L::ComposedOperator)
     prod(op -> convert(AbstractMatrix, op), L.ops)
 end
-SparseArrays.sparse(L::ComposedOperator) = prod(sparse, L.ops)
 
 # traits
 function Base.show(io::IO, L::ComposedOperator)
@@ -553,7 +617,7 @@ Base.size(L::ComposedOperator) = (size(first(L.ops), 1), size(last(L.ops), 2))
 for op in (:adjoint,
     :transpose)
     @eval Base.$op(L::ComposedOperator) = ComposedOperator($op.(reverse(L.ops))...;
-        cache = iscached(L) ? reverse(L.cache) : nothing,)
+        cache = iscached(L) ? reverse(L.cache) : nothing)
 end
 Base.conj(L::ComposedOperator) = ComposedOperator(conj.(L.ops); cache = L.cache)
 function Base.resize!(L::ComposedOperator, n::Integer)
@@ -576,7 +640,7 @@ function update_coefficients(L::ComposedOperator, u, p, t)
         ops = (ops..., update_coefficients(op, u, p, t))
     end
 
-    @set! L.ops = ops
+    @reset L.ops = ops
 end
 
 getops(L::ComposedOperator) = L.ops
@@ -596,7 +660,8 @@ for fact in (:lu, :lu!,
     :bunchkaufman, :bunchkaufman!,
     :lq, :lq!,
     :svd, :svd!)
-    @eval LinearAlgebra.$fact(L::ComposedOperator, args...) = prod(op -> $fact(op, args...),
+    @eval LinearAlgebra.$fact(L::ComposedOperator, args...) = prod(
+        op -> $fact(op, args...),
         reverse(L.ops))
 end
 
@@ -645,7 +710,7 @@ function cache_self(L::ComposedOperator, u::AbstractVecOrMat)
         cache = (similar(u, T, sz), cache...)
     end
 
-    @set! L.cache = cache
+    @reset L.cache = cache
     L
 end
 
@@ -659,7 +724,7 @@ function cache_internals(L::ComposedOperator, u::AbstractVecOrMat)
         ops = (cache_operator(L.ops[i], L.cache[i]), ops...)
     end
 
-    @set! L.ops = ops
+    @reset L.ops = ops
 end
 
 function LinearAlgebra.mul!(v::AbstractVecOrMat, L::ComposedOperator, u::AbstractVecOrMat)
@@ -756,7 +821,7 @@ function Base.resize!(L::InvertedOperator, n::Integer)
 end
 
 function update_coefficients(L::InvertedOperator, u, p, t)
-    @set! L.L = update_coefficients(L.L, u, p, t)
+    @reset L.L = update_coefficients(L.L, u, p, t)
 
     L
 end
@@ -786,12 +851,12 @@ Base.:\(L::InvertedOperator, u::AbstractVecOrMat) = L.L * u
 
 function cache_self(L::InvertedOperator, u::AbstractVecOrMat)
     cache = zero(u)
-    @set! L.cache = cache
+    @reset L.cache = cache
     L
 end
 
 function cache_internals(L::InvertedOperator, u::AbstractVecOrMat)
-    @set! L.L = cache_operator(L.L, u)
+    @reset L.L = cache_operator(L.L, u)
     L
 end
 
